@@ -8,7 +8,7 @@ use Nette\Configurator;
 use Nette\DI\Compiler;
 use Nette\DI\CompilerExtension;
 
-class RendererExtension extends CompilerExtension
+class ExtendedFormMacrosExtension extends CompilerExtension
 {
 
     public function loadConfiguration()

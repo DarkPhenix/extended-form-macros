@@ -2,7 +2,7 @@
 
 namespace InstanteTests\ExtendedFormMacros\DI;
 
-use Instante\ExtendedFormMacros\DI\RendererExtension;
+use Instante\ExtendedFormMacros\DI\ExtendedFormMacrosExtension;
 
 use Instante\ExtendedFormMacros\Latte\FormRenderingDispatcher;
 use Instante\ExtendedFormMacros\Latte\FormMacros;
@@ -13,18 +13,18 @@ require_once __DIR__ . '/../../bootstrap.php';
 
 // ::register()
 $mockConfigurator = mock(Configurator::class);
-RendererExtension::register($mockConfigurator);
+ExtendedFormMacrosExtension::register($mockConfigurator);
 $mockCompiler = \Mockery::mock(Compiler::class);
 
 /** @noinspection PhpMethodParametersCountMismatchInspection */
 $mockCompiler->shouldReceive('addExtension')
-    ->with(\Mockery::type('string'), \Mockery::type(RendererExtension::class))
+    ->with(\Mockery::type('string'), \Mockery::type(ExtendedFormMacrosExtension::class))
     ->once();
 $mockConfigurator->onCompile[0]($mockConfigurator, $mockCompiler);
 
 
 // ::loadConfiguration()
-$ext = new RendererExtension;
+$ext = new ExtendedFormMacrosExtension;
 $ext->setCompiler($mockCompiler, 'foo');
 
 $mockCompiler->shouldReceive('getContainerBuilder->getDefinition->addSetup')->withArgs(function ($arg) {
