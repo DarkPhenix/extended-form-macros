@@ -1,0 +1,8 @@
+{
+    "require": {
+        "latte/latte": "@dev",
+        "nette/bootstrap": "@dev",
+        "nette/di": "@dev",
+        "nette/forms": "@dev"
+    }
+}
