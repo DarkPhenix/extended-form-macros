@@ -10,12 +10,27 @@ use Latte\PhpWriter;
 
 /**
  * Provides extra form macros:
- * Provides extra form macros:
  *
  * <code>
- * {pair name} as {$form->getRenderer()->renderPair('name')}
- * {group name} as {$form->getRenderer()->renderGroup('name')}
- * {container name} as {$form->getRenderer()->renderContainer('name')}
+ * {pair name|$control} as {$form->getRenderer()->renderPair($form['name'])}
+ * {group name|$group} as {$form->getRenderer()->renderGroup($form['name'])}
+ * {container name|$container} as {$form->getRenderer()->renderContainer($form['name'])}
+ * TODO {form.errors $ownOnly=true} as {$form->getRenderer()->renderGlobalErrors($ownOnly)}
+ * TODO {form.body} as {$form->getRenderer()->renderBody()}
+ * TODO {control.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
+ * </code>
+ *
+ * Overrides form macros:
+ *
+ * <code>
+ * TODO {form} to render form begin and end using custom renderer
+ *        (FormsLatte\FormMacros uses FormsLatte\Runtime::renderFormBegin directly)
+ *
+ * TODO {label}
+ * TODO {control} to enable custom renderers of labels and controls
+ *           (FormsLatte\FormMacros renders the controls directly
+ *           without renderer processing)
+ *
  * </code>
  */
 class FormMacros extends MacroSet
