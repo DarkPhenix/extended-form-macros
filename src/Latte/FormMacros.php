@@ -61,7 +61,7 @@ class FormMacros extends MacroSet
         return sprintf(
             $this->ln($node)
             . $this->renderingDispatcher
-            . '->renderPair($this->global->formsStack, %s',
+            . '->renderPair($this->global->formsStack, %s)',
             $this->renderFormComponent($node, $writer));
     }
 

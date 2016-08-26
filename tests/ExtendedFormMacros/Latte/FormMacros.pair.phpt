@@ -10,5 +10,8 @@ $tester = new MacroTester('{form theForm}{pair foo}{/form}');
 
 $tester->getForm()->addText('foo', 'Foo field');
 
+$tester->getMockRenderer()->shouldReceive('renderBegin');
+$tester->getMockRenderer()->shouldReceive('renderEnd');
+
 $tester->getMockRenderer()->shouldReceive('renderPair')->with(Mockery::type(TextInput::class))->once();
 $tester->render();
