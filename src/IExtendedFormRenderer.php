@@ -55,9 +55,10 @@ interface IExtendedFormRenderer extends IFormRenderer
 
     /**
      * @param Form $form
+     * @param array $attrs
      * @return Html
      */
-    public function renderBegin(Form $form);
+    public function renderBegin(Form $form, array $attrs);
 
     /** @return Html */
     public function renderEnd();

@@ -23,18 +23,19 @@ use Latte\PhpWriter;
  * Overrides form macros:
  *
  * <code>
- * TODO {form} to render form begin and end using custom renderer
+ * {form} to render form begin and end using custom renderer
  *        (FormsLatte\FormMacros uses FormsLatte\Runtime::renderFormBegin directly)
  *
  * TODO {label}
  * TODO {control} to enable custom renderers of labels and controls
- *           (FormsLatte\FormMacros renders the controls directly
- *           without renderer processing)
+ *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
  * </code>
  */
 class FormMacros extends MacroSet
 {
+
+    private $renderingDispatcher = '$this->global->formRenderingDispatcher';
 
     /**
      * @param Compiler $compiler
@@ -46,6 +47,7 @@ class FormMacros extends MacroSet
         $me->addMacro('pair', [$me, 'macroPair']);
         $me->addMacro('group', [$me, 'macroGroup']);
         $me->addMacro('container', [$me, 'macroContainer']);
+        $me->addMacro('form', [$me, 'macroFormBegin'], [$me, 'macroFormEnd']);
         return $me;
     }
 
@@ -56,7 +58,10 @@ class FormMacros extends MacroSet
      */
     public function macroPair(MacroNode $node, PhpWriter $writer)
     {
-        return sprintf('$this->global->formRenderingDispatcher->renderPair($this->global->formsStack, %s)',
+        return sprintf(
+            $this->ln($node)
+            . $this->renderingDispatcher
+            . '->renderPair($this->global->formsStack, %s',
             $this->renderFormComponent($node, $writer));
     }
 
@@ -67,7 +72,10 @@ class FormMacros extends MacroSet
      */
     public function macroGroup(MacroNode $node, PhpWriter $writer)
     {
-        return $writer->write('$this->global->formRenderingDispatcher->renderGroup($this->global->formsStack,'
+        return $writer->write(
+            $this->ln($node)
+            . $this->renderingDispatcher
+            . '->renderGroup($this->global->formsStack,'
             . 'is_object(%node.word) ? %node.word : reset($this->global->formsStack)->getGroup(%node.word))');
     }
 
@@ -78,8 +86,56 @@ class FormMacros extends MacroSet
      */
     public function macroContainer(MacroNode $node, PhpWriter $writer)
     {
-        return sprintf('$this->global->formRenderingDispatcher->renderContainer($this->global->formsStack, %s)',
+        // writer intentionally not used - already processed by renderFormComponent
+        return sprintf(
+            $this->ln($node)
+            . $this->renderingDispatcher
+            . '->renderContainer($this->global->formsStack, %s)',
             $this->renderFormComponent($node, $writer));
+    }
+
+    /**
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     */
+    public function macroFormBegin(MacroNode $node, PhpWriter $writer)
+    {
+        // BEGIN code from FormsLatte\FormMacros::macroForm
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        if ($node->prefix) {
+            throw new CompileException('Did you mean <form n:name=...> ?');
+        }
+        $name = $node->tokenizer->fetchWord();
+        if ($name === FALSE) {
+            throw new CompileException('Missing form name in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        $node->tokenizer->reset();
+        // END code from FormsLatte\FormMacros::macroForm
+
+        $formRetrievalCode = ($name[0] === '$' ? 'is_object(%node.word) ? %node.word : ' : '')
+            . '$this->global->uiControl[%node.word]';
+        return $writer->write(
+            $this->ln($node)
+            . $this->renderingDispatcher
+            . '->renderBegin($form = $_form = $this->global->formsStack[] = '
+            . $formRetrievalCode
+            . ', %node.array)');
+    }
+
+    /**
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     */
+    public function macroFormEnd(MacroNode $node, PhpWriter $writer)
+    {
+        return $writer->write(
+            $this->ln($node)
+            . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack))');
     }
 
 
@@ -99,5 +155,10 @@ class FormMacros extends MacroSet
             'end($this->global->formsStack)[%0.word]',
             $name
         );
+    }
+
+    private function ln(MacroNode $node)
+    {
+        return "/* line $node->startLine */\n";
     }
 }

@@ -4,28 +4,52 @@ namespace Instante\ExtendedFormMacros\Latte;
 
 use Instante\ExtendedFormMacros\IExtendedFormRenderer;
 use Latte\RuntimeException;
+use Nette\Bridges\FormsLatte\Runtime;
 use Nette\Forms\Container;
 use Nette\Forms\ControlGroup;
+use Nette\Forms\Form;
 use Nette\Forms\IControl;
 
 class FormRenderingDispatcher
 {
     public function renderPair(array $formsStack, IControl $control)
     {
-        $this->checkInsideForm($formsStack, 'pair');
+        $this->assertInForm($formsStack, 'pair');
         $this->getExtendedRenderer($formsStack, 'pair')->renderPair($control);
     }
 
     public function renderGroup(array $formsStack, ControlGroup $group)
     {
-        $this->checkInsideForm($formsStack, 'group')->checkInsideTopLevelForm($formsStack, 'group');
+        $this->assertInForm($formsStack, 'group')->checkInsideTopLevelForm($formsStack, 'group');
         $this->getExtendedRenderer($formsStack, 'group')->renderGroup($group);
     }
 
     public function renderContainer(array $formsStack, Container $container)
     {
-        $this->checkInsideForm($formsStack, 'container');
+        $this->assertInForm($formsStack, 'container');
         $this->getExtendedRenderer($formsStack, 'container')->renderContainer($container);
+    }
+
+    public function renderBegin(Form $form, array $attrs)
+    {
+        $renderer = $form->getRenderer();
+        if ($renderer instanceof IExtendedFormRenderer) {
+            $renderer->renderBegin($form, $attrs);
+        } else {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            Runtime::renderFormBegin($form, $attrs);
+        }
+    }
+
+    public function renderEnd(Form $form)
+    {
+        $renderer = $form->getRenderer();
+        if ($renderer instanceof IExtendedFormRenderer) {
+            $renderer->renderEnd();
+        } else {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            Runtime::renderFormEnd($form);
+        }
     }
 
     protected function checkInsideTopLevelForm($formsStack, $macro)
@@ -36,7 +60,7 @@ class FormRenderingDispatcher
         return $this;
     }
 
-    protected function checkInsideForm($formsStack, $macro)
+    protected function assertInForm($formsStack, $macro)
     {
         if (count($formsStack) === 0) {
             throw new RuntimeException(sprintf('Cannot use %s macro outside form', $macro));
@@ -52,7 +76,7 @@ class FormRenderingDispatcher
      */
     protected function getExtendedRenderer(array $formsStack, $macro)
     {
-        $renderer = reset($formsStack)->getRenderer();
+        $renderer = $this->getRenderer($formsStack);
         if (!$renderer instanceof IExtendedFormRenderer) {
             throw new RuntimeException(sprintf('%s does not support {%s} macro, please use %s as form renderer',
                 get_class($renderer),
@@ -61,5 +85,15 @@ class FormRenderingDispatcher
             ));
         }
         return $renderer;
+    }
+
+    /**
+     * @param array $formsStack
+     * @return IExtendedFormRenderer
+     * @throws RuntimeException
+     */
+    protected function getRenderer(array $formsStack)
+    {
+        return reset($formsStack)->getRenderer();
     }
 }
