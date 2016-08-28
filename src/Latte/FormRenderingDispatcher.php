@@ -10,8 +10,6 @@ use Nette\Forms\ControlGroup;
 use Nette\Forms\Form;
 use Nette\Forms\IControl;
 use Nette\InvalidStateException;
-use Nette\NotImplementedException;
-use Nette\UnexpectedValueException;
 
 class FormRenderingDispatcher
 {
