@@ -63,6 +63,7 @@ class FormMacros extends NFormMacros
     {
         return sprintf(
             $this->ln($node)
+            . 'echo '
             . $this->renderingDispatcher
             . '->renderPair($this->global->formsStack, %s)',
             $this->renderFormComponent($node, $writer));
@@ -77,6 +78,7 @@ class FormMacros extends NFormMacros
     {
         return $writer->write(
             $this->ln($node)
+            . 'echo '
             . $this->renderingDispatcher
             . '->renderGroup($this->global->formsStack,'
             . 'is_object(%node.word) ? %node.word : reset($this->global->formsStack)->getGroup(%node.word))');
@@ -92,6 +94,7 @@ class FormMacros extends NFormMacros
         // writer intentionally not used - already processed by renderFormComponent
         return sprintf(
             $this->ln($node)
+            . 'echo '
             . $this->renderingDispatcher
             . '->renderContainer($this->global->formsStack, %s)',
             $this->renderFormComponent($node, $writer));
@@ -113,6 +116,7 @@ class FormMacros extends NFormMacros
             . '$this->global->uiControl[%node.word]';
         return $writer->write(
             $this->ln($node)
+            . 'echo '
             . $this->renderingDispatcher
             . '->renderBegin($form = $_form = $this->global->formsStack[] = '
             . $formRetrievalCode
@@ -128,11 +132,15 @@ class FormMacros extends NFormMacros
     {
         return $writer->write(
             $this->ln($node)
-            . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack))');
+            . 'echo ' . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack))');
     }
 
     /**
      * {label ...}
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
      */
     public function macroLabel(MacroNode $node, PhpWriter $writer)
     {
@@ -147,13 +155,14 @@ class FormMacros extends NFormMacros
         $name = array_shift($words);
         $formattedWords = implode(',', array_map([$writer, 'formatWord'], $words));
 
-        $ctrlExpr = '$_label = ' //used by macroLabelEnd
-            . ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
+        $ctrlExpr = ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
             . 'end($this->global->formsStack)[%0.word]';
         return $writer->write(
             $this->ln($node)
+            . '$_label = ' // $_label is used by macroLabelEnd
             . $this->renderingDispatcher
-            . "->renderLabel(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords])",
+            . "->renderLabel(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords]); "
+            . 'echo $_label',
             $name
         );
     }

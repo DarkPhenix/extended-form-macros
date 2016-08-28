@@ -18,29 +18,29 @@ class FormRenderingDispatcher
     public function renderPair(array $formsStack, IControl $control)
     {
         $this->assertInForm($formsStack, 'pair');
-        $this->getExtendedRenderer($formsStack, 'pair')->renderPair($control);
+        return $this->getExtendedRenderer($formsStack, 'pair')->renderPair($control);
     }
 
     public function renderGroup(array $formsStack, ControlGroup $group)
     {
         $this->assertInForm($formsStack, 'group')->checkInsideTopLevelForm($formsStack, 'group');
-        $this->getExtendedRenderer($formsStack, 'group')->renderGroup($group);
+        return $this->getExtendedRenderer($formsStack, 'group')->renderGroup($group);
     }
 
     public function renderContainer(array $formsStack, Container $container)
     {
         $this->assertInForm($formsStack, 'container');
-        $this->getExtendedRenderer($formsStack, 'container')->renderContainer($container);
+        return $this->getExtendedRenderer($formsStack, 'container')->renderContainer($container);
     }
 
     public function renderBegin(Form $form, array $attrs)
     {
         $renderer = $form->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            $renderer->renderBegin($form, $attrs);
+            return $renderer->renderBegin($form, $attrs);
         } else {
             /** @noinspection PhpInternalEntityUsedInspection */
-            Runtime::renderFormBegin($form, $attrs);
+            return Runtime::renderFormBegin($form, $attrs);
         }
     }
 
@@ -48,10 +48,10 @@ class FormRenderingDispatcher
     {
         $renderer = $form->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            $renderer->renderEnd();
+            return $renderer->renderEnd();
         } else {
             /** @noinspection PhpInternalEntityUsedInspection */
-            Runtime::renderFormEnd($form);
+            return Runtime::renderFormEnd($form);
         }
     }
 
@@ -59,12 +59,12 @@ class FormRenderingDispatcher
     {
         $renderer = reset($formsStack)->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            $renderer->renderLabel($control, $attrs, $parts ? $parts[0] : NULL);
+            return $renderer->renderLabel($control, $attrs, $parts ? $parts[0] : NULL);
         } else {
             if ($parts && method_exists($control, 'getLabelPart')) {
-                echo $control->getLabelPart($parts[0]);
+                return $control->getLabelPart($parts[0]);
             } elseif (!$parts && method_exists($control, 'getLabel')) {
-                echo $control->getLabel();
+                return $control->getLabel();
             } else {
                 throw new InvalidStateException('No getLabel[Part] method available to render ' . get_class($control));
             }
