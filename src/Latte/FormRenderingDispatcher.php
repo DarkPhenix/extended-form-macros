@@ -9,6 +9,9 @@ use Nette\Forms\Container;
 use Nette\Forms\ControlGroup;
 use Nette\Forms\Form;
 use Nette\Forms\IControl;
+use Nette\InvalidStateException;
+use Nette\NotImplementedException;
+use Nette\UnexpectedValueException;
 
 class FormRenderingDispatcher
 {
@@ -49,6 +52,22 @@ class FormRenderingDispatcher
         } else {
             /** @noinspection PhpInternalEntityUsedInspection */
             Runtime::renderFormEnd($form);
+        }
+    }
+
+    public function renderLabel(array $formsStack, IControl $control, array $attrs, array $parts)
+    {
+        $renderer = reset($formsStack)->getRenderer();
+        if ($renderer instanceof IExtendedFormRenderer) {
+            $renderer->renderLabel($control, $attrs, $parts ? $parts[0] : NULL);
+        } else {
+            if ($parts && method_exists($control, 'getLabelPart')) {
+                echo $control->getLabelPart($parts[0]);
+            } elseif (!$parts && method_exists($control, 'getLabel')) {
+                echo $control->getLabel();
+            } else {
+                throw new InvalidStateException('No getLabel[Part] method available to render ' . get_class($control));
+            }
         }
     }
 

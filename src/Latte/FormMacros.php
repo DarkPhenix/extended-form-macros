@@ -7,6 +7,7 @@ use Latte\Compiler;
 use Latte\Macros\MacroSet;
 use Latte\MacroNode;
 use Latte\PhpWriter;
+use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
 
 /**
  * Provides extra form macros:
@@ -26,13 +27,13 @@ use Latte\PhpWriter;
  * {form} to render form begin and end using custom renderer
  *        (FormsLatte\FormMacros uses FormsLatte\Runtime::renderFormBegin directly)
  *
- * TODO {label}
+ * {label}
  * TODO {control} to enable custom renderers of labels and controls
  *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
  * </code>
  */
-class FormMacros extends MacroSet
+class FormMacros extends NFormMacros
 {
 
     private $renderingDispatcher = '$this->global->formRenderingDispatcher';
@@ -47,7 +48,9 @@ class FormMacros extends MacroSet
         $me->addMacro('pair', [$me, 'macroPair']);
         $me->addMacro('group', [$me, 'macroGroup']);
         $me->addMacro('container', [$me, 'macroContainer']);
-        $me->addMacro('form', [$me, 'macroFormBegin'], [$me, 'macroFormEnd']);
+        $me->addMacro('form', [$me, 'macroForm'], [$me, 'macroFormEnd']);
+        $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
+        $me->addMacro('input', [$me, 'macroInput']);
         return $me;
     }
 
@@ -98,23 +101,13 @@ class FormMacros extends MacroSet
      * @param MacroNode $node
      * @param PhpWriter $writer
      * @return string
+     * @throws CompileException
      */
-    public function macroFormBegin(MacroNode $node, PhpWriter $writer)
+    public function macroForm(MacroNode $node, PhpWriter $writer)
     {
-        // BEGIN code from FormsLatte\FormMacros::macroForm
-        if ($node->modifiers) {
-            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
-        }
-        if ($node->prefix) {
-            throw new CompileException('Did you mean <form n:name=...> ?');
-        }
+        parent::macroForm($node, $writer); //to use argument validations from Nette and set node->replaced
         $name = $node->tokenizer->fetchWord();
-        if ($name === FALSE) {
-            throw new CompileException('Missing form name in ' . $node->getNotation());
-        }
-        $node->replaced = TRUE;
         $node->tokenizer->reset();
-        // END code from FormsLatte\FormMacros::macroForm
 
         $formRetrievalCode = ($name[0] === '$' ? 'is_object(%node.word) ? %node.word : ' : '')
             . '$this->global->uiControl[%node.word]';
@@ -138,6 +131,32 @@ class FormMacros extends MacroSet
             . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack))');
     }
 
+    /**
+     * {label ...}
+     */
+    public function macroLabel(MacroNode $node, PhpWriter $writer)
+    {
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        $words = $node->tokenizer->fetchWords();
+        if (!$words) {
+            throw new CompileException('Missing name in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        $name = array_shift($words);
+        $formattedWords = implode(',', array_map([$writer, 'formatWord'], $words));
+
+        $ctrlExpr = '$_label = ' //used by macroLabelEnd
+            . ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
+            . 'end($this->global->formsStack)[%0.word]';
+        return $writer->write(
+            $this->ln($node)
+            . $this->renderingDispatcher
+            . "->renderLabel(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords])",
+            $name
+        );
+    }
 
     protected function renderFormComponent(MacroNode $node, PhpWriter $writer)
     {

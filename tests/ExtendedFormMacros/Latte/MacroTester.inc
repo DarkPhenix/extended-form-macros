@@ -58,6 +58,12 @@ class MacroTester
         return $this->mockRenderer;
     }
 
+    /** @return Template */
+    public function getTemplate()
+    {
+        return $this->template;
+    }
+
     public function render($template = 'default')
     {
         ob_start();

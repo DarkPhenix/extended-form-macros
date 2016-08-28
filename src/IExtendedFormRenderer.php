@@ -43,15 +43,19 @@ interface IExtendedFormRenderer extends IFormRenderer
 
     /**
      * @param IControl $control
+     * @param array $attrs
+     * @param string $part
      * @return Html
      */
-    public function renderLabel(IControl $control);
+    public function renderLabel(IControl $control, array $attrs = [], $part = NULL);
 
     /**
      * @param IControl $control
+     * @param array $attrs
+     * @param string $part
      * @return Html
      */
-    public function renderControl(IControl $control);
+    public function renderControl(IControl $control, array $attrs = [], $part = NULL);
 
     /**
      * @param Form $form
