@@ -71,6 +71,23 @@ class FormRenderingDispatcher
         }
     }
 
+    public function renderControl(array $formsStack, IControl $control, array $attrs, array $parts)
+    {
+        $renderer = reset($formsStack)->getRenderer();
+        if ($renderer instanceof IExtendedFormRenderer) {
+            return $renderer->renderControl($control, $attrs, $parts ? $parts[0] : NULL);
+        } else {
+            if ($parts && method_exists($control, 'getControlPart')) {
+                return $control->getControlPart($parts[0]);
+            } elseif (!$parts && method_exists($control, 'getControl')) {
+                return $control->getControl();
+            } else {
+                throw new InvalidStateException('No getControl[Part] method available to render '
+                    . get_class($control));
+            }
+        }
+    }
+
     protected function checkInsideTopLevelForm($formsStack, $macro)
     {
         if (count($formsStack) > 1) {

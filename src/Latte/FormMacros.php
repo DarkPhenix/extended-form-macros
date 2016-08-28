@@ -28,7 +28,7 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  *        (FormsLatte\FormMacros uses FormsLatte\Runtime::renderFormBegin directly)
  *
  * {label}
- * TODO {control} to enable custom renderers of labels and controls
+ * {input} to enable custom renderers of labels and controls
  *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
  * </code>
@@ -163,6 +163,37 @@ class FormMacros extends NFormMacros
             . $this->renderingDispatcher
             . "->renderLabel(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords]); "
             . 'echo $_label',
+            $name
+        );
+    }
+
+    /**
+     * {input ...}
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
+     */
+    public function macroInput(MacroNode $node, PhpWriter $writer)
+    {
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        $words = $node->tokenizer->fetchWords();
+        if (!$words) {
+            throw new CompileException('Missing name in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        $name = array_shift($words);
+        $formattedWords = implode(',', array_map([$writer, 'formatWord'], $words));
+
+        $ctrlExpr = ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
+            . 'end($this->global->formsStack)[%0.word]';
+        return $writer->write(
+            $this->ln($node)
+            . 'echo '
+            . $this->renderingDispatcher
+            . "->renderControl(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords])",
             $name
         );
     }
