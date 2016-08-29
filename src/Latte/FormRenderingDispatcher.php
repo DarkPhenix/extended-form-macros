@@ -31,25 +31,25 @@ class FormRenderingDispatcher
         return $this->getExtendedRenderer($formsStack, 'container')->renderContainer($container);
     }
 
-    public function renderBegin(Form $form, array $attrs)
+    public function renderBegin(Form $form, array $attrs, $withTags = TRUE)
     {
         $renderer = $form->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            return $renderer->renderBegin($form, $attrs);
+            return $renderer->renderBegin($form, $attrs, $withTags);
         } else {
             /** @noinspection PhpInternalEntityUsedInspection */
-            return Runtime::renderFormBegin($form, $attrs);
+            return Runtime::renderFormBegin($form, $attrs, $withTags);
         }
     }
 
-    public function renderEnd(Form $form)
+    public function renderEnd(Form $form, $withTags = TRUE)
     {
         $renderer = $form->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            return $renderer->renderEnd();
+            return $renderer->renderEnd($withTags);
         } else {
             /** @noinspection PhpInternalEntityUsedInspection */
-            return Runtime::renderFormEnd($form);
+            return Runtime::renderFormEnd($form, $withTags);
         }
     }
 

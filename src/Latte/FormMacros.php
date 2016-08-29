@@ -8,6 +8,7 @@ use Latte\Macros\MacroSet;
 use Latte\MacroNode;
 use Latte\PhpWriter;
 use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
+use Nette\NotImplementedException;
 
 /**
  * Provides extra form macros:
@@ -31,9 +32,12 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  * {input} to enable custom renderers of labels and controls
  *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
+ * <form n:name>
+ * TODO <input|select|textarea|label|button n:name>
+ *
  * </code>
  *
- * TODO override name macro
+ *
  */
 class FormMacros extends NFormMacros
 {
@@ -56,6 +60,7 @@ class FormMacros extends NFormMacros
         $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
         $me->addMacro('input', [$me, 'macroInput']);
         $me->addMacro('input.errors', [$me, 'macroInputErrors']);
+        $me->addMacro('name', [$me, 'macroName'], [$me, 'macroNameEnd'], [$me, 'macroNameAttr']);
         return $me;
     }
 
@@ -114,6 +119,18 @@ class FormMacros extends NFormMacros
     public function macroForm(MacroNode $node, PhpWriter $writer)
     {
         parent::macroForm($node, $writer); //to use argument validations from Nette and set node->replaced
+        return $this->_macroFormBegin($node, $writer);
+    }
+
+    /**
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @param array|NULL $attrs if NULL, whole tag is normally rendered. if not NULL, redirected from <form n:name>
+     *   -> override attrs and render only remaining attributes
+     * @return string
+     */
+    protected function _macroFormBegin(MacroNode $node, PhpWriter $writer, array $attrs = NULL)
+    {
         $name = $node->tokenizer->fetchWord();
         $node->tokenizer->reset();
 
@@ -125,19 +142,26 @@ class FormMacros extends NFormMacros
             . $this->renderingDispatcher
             . '->renderBegin($form = $_form = $this->global->formsStack[] = '
             . $formRetrievalCode
-            . ', %node.array)');
+            . ', ' . ($attrs === NULL ? '%node.array' : '%0.var') . ', %1.var)',
+            $attrs,
+            $attrs === NULL
+
+        );
     }
 
     /**
      * @param MacroNode $node
      * @param PhpWriter $writer
+     * @param bool $withTags false = skip </form> tag
      * @return string
      */
-    public function macroFormEnd(MacroNode $node, PhpWriter $writer)
+    public function macroFormEnd(MacroNode $node, PhpWriter $writer, $withTags = TRUE)
     {
         return $writer->write(
             $this->ln($node)
-            . 'echo ' . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack))');
+            . 'echo ' . $this->renderingDispatcher . '->renderEnd(array_pop($this->global->formsStack), %0.var)',
+            $withTags
+        );
     }
 
     /**
@@ -277,6 +301,68 @@ class FormMacros extends NFormMacros
             . "->renderControlErrors(\$this->global->formsStack, $ctrlExpr)",
             $name
         );
+    }
+
+    /**
+     * <form n:name>, <input n:name>, <select n:name>, <textarea n:name>, <label n:name> and <button n:name>
+     */
+    public function macroNameAttr(MacroNode $node, PhpWriter $writer)
+    {
+        $tagName = strtolower($node->htmlNode->name);
+
+        //all other nodes MUST have rendered end tag
+        $node->empty = $tagName === 'input';
+
+        if ($tagName === 'form') {
+            // clear attributes that were overriden in HTML tag
+            $attrs = array_fill_keys(array_keys($node->htmlNode->attrs), NULL);
+            return $this->_macroFormBegin($node, $writer, $attrs);
+        } else {
+            throw new NotImplementedException;
+        }
+        // ancestor's macroNameAttr code
+        //$words = $node->tokenizer->fetchWords();
+        //if (!$words) {
+        //    throw new CompileException('Missing name in ' . $node->getNotation());
+        //}
+        //$name = array_shift($words);
+        //$node->empty = $tagName === 'input';
+        //
+        //if ($tagName === 'form') {
+        // ...
+        //} else {
+        //    $method = $tagName === 'label' ? 'getLabel' : 'getControl';
+        //    return $writer->write(
+        //        '$_input = ' . ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
+        //        . 'end($this->global->formsStack)[%0.word]; echo $_input->%1.raw'
+        //        . ($node->htmlNode->attrs ? '->addAttributes(%2.var)' : '') . '->attributes()',
+        //        $name,
+        //        $method . 'Part(' . implode(', ', array_map([$writer, 'formatWord'], $words)) . ')',
+        //        array_fill_keys(array_keys($node->htmlNode->attrs), NULL)
+        //    );
+        //}
+    }
+
+    public function macroNameEnd(MacroNode $node, PhpWriter $writer)
+    {
+        $tagName = strtolower($node->htmlNode->name);
+        if ($tagName === 'form') {
+            $node->innerContent .= '<?php ' . $this->macroFormEnd($node, $writer, FALSE) . ' ?>';
+        } else {
+            throw new NotImplementedException;
+        }
+        // ancestor's macroNameEnd code
+        //elseif ($tagName === 'label') {
+        //    if ($node->htmlNode->empty) {
+        //        $node->innerContent = "<?php echo \$_input->getLabelPart()->getHtml() ? >";
+        //    }
+        //} elseif ($tagName === 'button') {
+        //    if ($node->htmlNode->empty) {
+        //        $node->innerContent = '<?php echo htmlspecialchars($_input->caption) ? >';
+        //    }
+        //} else { // select, textarea
+        //    $node->innerContent = '<?php echo $_input->getControl()->getHtml() ? >';
+        //}
     }
 
     /**

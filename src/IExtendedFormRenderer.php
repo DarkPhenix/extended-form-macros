@@ -67,10 +67,14 @@ interface IExtendedFormRenderer extends IFormRenderer
     /**
      * @param Form $form
      * @param array $attrs
+     * @param bool $withTags
      * @return Html
      */
-    public function renderBegin(Form $form, array $attrs);
+    public function renderBegin(Form $form, array $attrs, $withTags = TRUE);
 
-    /** @return Html */
-    public function renderEnd();
+    /**
+     * @param bool $withTags FALSE = skip </form> end tag
+     * @return Html
+     */
+    public function renderEnd($withTags = TRUE);
 }

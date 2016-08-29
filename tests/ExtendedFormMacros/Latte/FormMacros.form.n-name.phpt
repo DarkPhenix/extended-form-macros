@@ -6,14 +6,15 @@ use Nette\Forms\Form;
 require __DIR__ . '/../../bootstrap.php';
 require __DIR__ . '/MacroTester.inc';
 
-$tester = new MacroTester('{form theForm foo => bar, bar => baz}{/form}');
+$tester = new MacroTester('<form n:name="theForm" foo="bar" bar="baz"></form>');
 
 $tester->getMockRenderer()->shouldReceive('renderBegin')->with(
     Mockery::type(Form::class),
     [
-        'foo' => 'bar',
-        'bar' => 'baz',
+        'foo' => NULL,
+        'bar' => NULL,
     ],
-    TRUE)->once();
-$tester->getMockRenderer()->shouldReceive('renderEnd')->with(TRUE)->once();
+    FALSE
+)->once();
+$tester->getMockRenderer()->shouldReceive('renderEnd')->with(FALSE)->once();
 $tester->render();
