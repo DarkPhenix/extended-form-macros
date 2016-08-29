@@ -18,7 +18,7 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  * {container name|$container} as {$form->getRenderer()->renderContainer($form['name'])}
  * {form.errors [all]]} as {$form->getRenderer()->renderGlobalErrors(!$all)}
  * {form.body} as {$form->getRenderer()->renderBody()}
- * TODO {input.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
+ * {input.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
  * </code>
  *
  * Overrides form macros:
@@ -32,6 +32,8 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
  * </code>
+ *
+ * TODO override name macro
  */
 class FormMacros extends NFormMacros
 {
@@ -53,6 +55,7 @@ class FormMacros extends NFormMacros
         $me->addMacro('form.body', [$me, 'macroFormBody']);
         $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
         $me->addMacro('input', [$me, 'macroInput']);
+        $me->addMacro('input.errors', [$me, 'macroInputErrors']);
         return $me;
     }
 
@@ -242,6 +245,37 @@ class FormMacros extends NFormMacros
             $this->ln($node)
             . 'echo '
             . $this->renderingDispatcher . '->renderBody($this->global->formsStack);'
+        );
+    }
+
+    /**
+     * {input.errors ...}
+     *
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
+     */
+    public function macroInputErrors(MacroNode $node, PhpWriter $writer)
+    {
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        $words = $node->tokenizer->fetchWords();
+        if (!$words) {
+            throw new CompileException('Missing name in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        $name = array_shift($words);
+
+        $ctrlExpr = ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
+            . 'end($this->global->formsStack)[%0.word]';
+        return $writer->write(
+            $this->ln($node)
+            . 'echo '
+            . $this->renderingDispatcher
+            . "->renderControlErrors(\$this->global->formsStack, $ctrlExpr)",
+            $name
         );
     }
 
