@@ -1,7 +1,6 @@
 <?php
 
 use InstanteTests\ExtendedFormMacros\Latte\MacroTester;
-use Nette\Forms\Controls\TextInput;
 use Tester\Assert;
 
 require __DIR__ . '/../../bootstrap.php';
