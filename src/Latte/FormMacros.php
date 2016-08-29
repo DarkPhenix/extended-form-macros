@@ -17,7 +17,7 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  * {group name|$group} as {$form->getRenderer()->renderGroup($form['name'])}
  * {container name|$container} as {$form->getRenderer()->renderContainer($form['name'])}
  * {form.errors [all]]} as {$form->getRenderer()->renderGlobalErrors(!$all)}
- * TODO {form.body} as {$form->getRenderer()->renderBody()}
+ * {form.body} as {$form->getRenderer()->renderBody()}
  * TODO {input.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
  * </code>
  *
@@ -50,6 +50,7 @@ class FormMacros extends NFormMacros
         $me->addMacro('container', [$me, 'macroContainer']);
         $me->addMacro('form', [$me, 'macroForm'], [$me, 'macroFormEnd']);
         $me->addMacro('form.errors', [$me, 'macroFormErrors']);
+        $me->addMacro('form.body', [$me, 'macroFormBody']);
         $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
         $me->addMacro('input', [$me, 'macroInput']);
         return $me;
@@ -138,6 +139,7 @@ class FormMacros extends NFormMacros
 
     /**
      * {label ...}
+     *
      * @param MacroNode $node
      * @param PhpWriter $writer
      * @return string
@@ -170,6 +172,7 @@ class FormMacros extends NFormMacros
 
     /**
      * {input ...}
+     *
      * @param MacroNode $node
      * @param PhpWriter $writer
      * @return string
@@ -201,6 +204,7 @@ class FormMacros extends NFormMacros
 
     /**
      * {form.errors}
+     *
      * @param MacroNode $node
      * @param PhpWriter $writer
      * @return string
@@ -220,6 +224,35 @@ class FormMacros extends NFormMacros
         );
     }
 
+    /**
+     * {form.body}
+     *
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
+     */
+    public function macroFormBody(MacroNode $node, PhpWriter $writer)
+    {
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        return $writer->write(
+            $this->ln($node)
+            . 'echo '
+            . $this->renderingDispatcher . '->renderBody($this->global->formsStack);'
+        );
+    }
+
+    /**
+     * Common method to generate code extracting single form component (like $form[%node.word])
+     *
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
+     */
     protected function renderFormComponent(MacroNode $node, PhpWriter $writer)
     {
         if ($node->modifiers) {

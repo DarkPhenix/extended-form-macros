@@ -36,6 +36,13 @@ interface IExtendedFormRenderer extends IFormRenderer
     public function renderGlobalErrors($ownOnly = TRUE);
 
     /**
+     * Render all form pairs, groups and containers
+     *
+     * @return Html
+     */
+    public function renderBody();
+
+    /**
      * @param IControl $control
      * @return Html
      */

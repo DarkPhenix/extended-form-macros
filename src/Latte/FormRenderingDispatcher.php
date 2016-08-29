@@ -92,6 +92,12 @@ class FormRenderingDispatcher
         return $this->getExtendedRenderer($formsStack, 'form.errors')->renderGlobalErrors($own);
     }
 
+    public function renderBody($formsStack)
+    {
+        $this->assertInForm($formsStack, 'form.body');
+        return $this->getExtendedRenderer($formsStack, 'form.body')->renderBody();
+    }
+
     protected function checkInsideTopLevelForm($formsStack, $macro)
     {
         if (count($formsStack) > 1) {
