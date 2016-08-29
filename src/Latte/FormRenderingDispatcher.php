@@ -86,6 +86,12 @@ class FormRenderingDispatcher
         }
     }
 
+    public function renderGlobalErrors($formsStack, $own = TRUE)
+    {
+        $this->assertInForm($formsStack, 'form.errors');
+        return $this->getExtendedRenderer($formsStack, 'form.errors')->renderGlobalErrors($own);
+    }
+
     protected function checkInsideTopLevelForm($formsStack, $macro)
     {
         if (count($formsStack) > 1) {

@@ -16,9 +16,9 @@ use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
  * {pair name|$control} as {$form->getRenderer()->renderPair($form['name'])}
  * {group name|$group} as {$form->getRenderer()->renderGroup($form['name'])}
  * {container name|$container} as {$form->getRenderer()->renderContainer($form['name'])}
- * TODO {form.errors $ownOnly=true} as {$form->getRenderer()->renderGlobalErrors($ownOnly)}
+ * {form.errors [all]]} as {$form->getRenderer()->renderGlobalErrors(!$all)}
  * TODO {form.body} as {$form->getRenderer()->renderBody()}
- * TODO {control.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
+ * TODO {input.errors name|$control} as {$form->getRenderer()->renderControlErrors($form['name'])}
  * </code>
  *
  * Overrides form macros:
@@ -49,6 +49,7 @@ class FormMacros extends NFormMacros
         $me->addMacro('group', [$me, 'macroGroup']);
         $me->addMacro('container', [$me, 'macroContainer']);
         $me->addMacro('form', [$me, 'macroForm'], [$me, 'macroFormEnd']);
+        $me->addMacro('form.errors', [$me, 'macroFormErrors']);
         $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
         $me->addMacro('input', [$me, 'macroInput']);
         return $me;
@@ -195,6 +196,27 @@ class FormMacros extends NFormMacros
             . $this->renderingDispatcher
             . "->renderControl(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords])",
             $name
+        );
+    }
+
+    /**
+     * {form.errors}
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @return string
+     * @throws CompileException
+     */
+    public function macroFormErrors(MacroNode $node, PhpWriter $writer)
+    {
+        if ($node->modifiers) {
+            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
+        }
+        $node->replaced = TRUE;
+        return $writer->write(
+            $this->ln($node)
+            . 'echo '
+            . $this->renderingDispatcher . '->renderGlobalErrors($this->global->formsStack%0.raw);',
+            $node->args === 'all' ? ', FALSE' : ''
         );
     }
 
