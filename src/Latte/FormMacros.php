@@ -33,8 +33,8 @@ use Nette\NotImplementedException;
  *           (FormsLatte\FormMacros renders the controls directly without renderer processing)
  *
  * <form n:name>
- * TODO <input|select|textarea|label|button n:name>
- *
+ * <label n:name>
+ * TODO <input|select|textarea|button n:name>
  * </code>
  *
  * Overridden macros are passed to extended form renderer if available, otherwise they are processed
@@ -350,6 +350,8 @@ class FormMacros extends NFormMacros
 
         if ($tagName === 'form') {
             return $this->_macroFormBegin($node, $writer, $attrs);
+        } elseif ($tagName === 'label') {
+            return $this->_macroLabel($node, $writer, $attrs);
         } else {
             throw new NotImplementedException;
         }
@@ -381,6 +383,11 @@ class FormMacros extends NFormMacros
         $tagName = strtolower($node->htmlNode->name);
         if ($tagName === 'form') {
             $node->innerContent .= '<?php ' . $this->macroFormEnd($node, $writer, FALSE) . ' ?>';
+        } elseif ($tagName === 'label') {
+            if ($node->htmlNode->empty) {
+                // inner content of rendered label without wrapping
+                $node->innerContent = '<?php echo $_label->getHtml(); ?>';
+            }
         } else {
             throw new NotImplementedException;
         }
