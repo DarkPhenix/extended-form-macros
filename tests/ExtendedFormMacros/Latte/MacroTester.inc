@@ -70,4 +70,9 @@ class MacroTester
         $this->template->render($template);
         return ob_get_clean();
     }
+
+    public function compile($template = 'default')
+    {
+        return $this->template->getLatte()->compile($template);
+    }
 }

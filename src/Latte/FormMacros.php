@@ -8,7 +8,6 @@ use Latte\Macros\MacroSet;
 use Latte\MacroNode;
 use Latte\PhpWriter;
 use Nette\Bridges\FormsLatte\FormMacros as NFormMacros;
-use Nette\NotImplementedException;
 
 /**
  * Provides extra form macros:
@@ -34,7 +33,7 @@ use Nette\NotImplementedException;
  *
  * <form n:name>
  * <label n:name>
- * TODO <input|select|textarea|button n:name>
+ * <input|select|textarea|button n:name>
  * </code>
  *
  * Overridden macros are passed to extended form renderer if available, otherwise they are processed
@@ -47,6 +46,8 @@ class FormMacros extends NFormMacros
 {
 
     private $renderingDispatcher = '$this->global->formRenderingDispatcher';
+
+    private static $supportedNameTags = ['select', 'input', 'button', 'textarea', 'form', 'label'];
 
     /**
      * @param Compiler $compiler
@@ -210,8 +211,7 @@ class FormMacros extends NFormMacros
         . $writer->write(', ')
         . $this->writeAttrsFromMacroOrTag($writer, $attrs)
         . $writer->write(
-            ", %0.var); "
-            . 'echo $_label'
+            ', %0.var); echo $_label'
             . ($attrs === NULL ? '' : '->attributes()'),
             count($words) ? $words[0] : NULL
         );
@@ -248,14 +248,14 @@ class FormMacros extends NFormMacros
 
         return $writer->write(
             $this->ln($node)
-            . 'echo '
+            . '$_input = '
             . $this->renderingDispatcher
-            . '->renderControl($this->global->formsStack, ')
+            . '->renderControl($this->global->formsStack, $_control = ')
         . $this->writeControlReturningExpression($writer, $name)
         . $writer->write(', ')
         . $this->writeAttrsFromMacroOrTag($writer, $attrs)
         . $writer->write(
-            ", %0.var)"
+            ', %0.var); echo $_input'
             . ($attrs === NULL ? '' : '->attributes()'),
             count($words) ? $words[0] : NULL
         );
@@ -352,30 +352,12 @@ class FormMacros extends NFormMacros
             return $this->_macroFormBegin($node, $writer, $attrs);
         } elseif ($tagName === 'label') {
             return $this->_macroLabel($node, $writer, $attrs);
+        } elseif (in_array($tagName, static::$supportedNameTags, TRUE)) {
+            return $this->_macroInput($node, $writer, $attrs);
         } else {
-            throw new NotImplementedException;
+            throw new CompileException("Unsupported tag <$tagName n:name>, did you mean one of "
+                . implode(', ', static::$supportedNameTags) . '?');
         }
-        // ancestor's macroNameAttr code
-        //$words = $node->tokenizer->fetchWords();
-        //if (!$words) {
-        //    throw new CompileException('Missing name in ' . $node->getNotation());
-        //}
-        //$name = array_shift($words);
-        //$node->empty = $tagName === 'input';
-        //
-        //if ($tagName === 'form') {
-        // ...
-        //} else {
-        //    $method = $tagName === 'label' ? 'getLabel' : 'getControl';
-        //    return $writer->write(
-        //        '$_input = ' . ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
-        //        . 'end($this->global->formsStack)[%0.word]; echo $_input->%1.raw'
-        //        . ($node->htmlNode->attrs ? '->addAttributes(%2.var)' : '') . '->attributes()',
-        //        $name,
-        //        $method . 'Part(' . implode(', ', array_map([$writer, 'formatWord'], $words)) . ')',
-        //        array_fill_keys(array_keys($node->htmlNode->attrs), NULL)
-        //    );
-        //}
     }
 
     public function macroNameEnd(MacroNode $node, PhpWriter $writer)
@@ -388,8 +370,16 @@ class FormMacros extends NFormMacros
                 // inner content of rendered label without wrapping
                 $node->innerContent = '<?php echo $_label->getHtml(); ?>';
             }
+        } elseif ($tagName === 'button') {
+            if ($node->htmlNode->empty) {
+                // because input type button has its caption stored in value attribute instead of node content
+                $node->innerContent = '<?php echo $_control->caption; ?>';
+            }
         } else {
-            throw new NotImplementedException;
+            if (!$node->htmlNode->empty) {
+                throw new CompileException("Element <$tagName n:name=...> must not have any content, use empty variant <$tagName n:name=... />");
+            }
+            $node->innerContent = '<?php echo $_input->getHtml() ?>';
         }
         // ancestor's macroNameEnd code
         //elseif ($tagName === 'label') {
