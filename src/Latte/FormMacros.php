@@ -37,6 +37,10 @@ use Nette\NotImplementedException;
  *
  * </code>
  *
+ * Overridden macros are passed to extended form renderer if available, otherwise they are processed
+ * as usual:
+ *   - form using Nette\Bridges\FormsLatte\Runtime::renderForm(Begin|End)
+ *   - label and control passing through Html from IControl::get(Control|Label)(Part)?()
  *
  */
 class FormMacros extends NFormMacros
@@ -123,6 +127,8 @@ class FormMacros extends NFormMacros
     }
 
     /**
+     * Common handler for {form} and <form n:name>
+     *
      * @param MacroNode $node
      * @param PhpWriter $writer
      * @param array|NULL $attrs if NULL, whole tag is normally rendered. if not NULL, redirected from <form n:name>
@@ -142,11 +148,14 @@ class FormMacros extends NFormMacros
             . $this->renderingDispatcher
             . '->renderBegin($form = $_form = $this->global->formsStack[] = '
             . $formRetrievalCode
-            . ', ' . ($attrs === NULL ? '%node.array' : '%0.var') . ', %1.var)',
-            $attrs,
+            . ', '
+            . ($attrs === NULL ? '%node.array' : '%0.var'),
+            $attrs
+        )
+        . $writer->write(', %0.var)',
             $attrs === NULL
-
         );
+
     }
 
     /**
@@ -174,26 +183,37 @@ class FormMacros extends NFormMacros
      */
     public function macroLabel(MacroNode $node, PhpWriter $writer)
     {
-        if ($node->modifiers) {
-            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
-        }
-        $words = $node->tokenizer->fetchWords();
-        if (!$words) {
-            throw new CompileException('Missing name in ' . $node->getNotation());
-        }
-        $node->replaced = TRUE;
-        $name = array_shift($words);
-        $formattedWords = implode(',', array_map([$writer, 'formatWord'], $words));
+        parent::macroLabel($node, $writer);
+        $node->tokenizer->reset();
+        return $this->_macroLabel($node, $writer);
+    }
 
-        $ctrlExpr = ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
-            . 'end($this->global->formsStack)[%0.word]';
+    /**
+     * Common handle for {label} and <label n:name>
+     *
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @param array $attrs
+     * @return string
+     */
+    protected function _macroLabel(MacroNode $node, PhpWriter $writer, array $attrs = NULL)
+    {
+        $words = $node->tokenizer->fetchWords();
+        $name = array_shift($words);
+
         return $writer->write(
             $this->ln($node)
             . '$_label = ' // $_label is used by macroLabelEnd
             . $this->renderingDispatcher
-            . "->renderLabel(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords]); "
-            . 'echo $_label',
-            $name
+            . '->renderLabel($this->global->formsStack, ')
+        . $this->writeControlReturningExpression($writer, $name)
+        . $writer->write(', ')
+        . $this->writeAttrsFromMacroOrTag($writer, $attrs)
+        . $writer->write(
+            ", %0.var); "
+            . 'echo $_label'
+            . ($attrs === NULL ? '' : '->attributes()'),
+            count($words) ? $words[0] : NULL
         );
     }
 
@@ -207,25 +227,37 @@ class FormMacros extends NFormMacros
      */
     public function macroInput(MacroNode $node, PhpWriter $writer)
     {
-        if ($node->modifiers) {
-            throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
-        }
-        $words = $node->tokenizer->fetchWords();
-        if (!$words) {
-            throw new CompileException('Missing name in ' . $node->getNotation());
-        }
-        $node->replaced = TRUE;
-        $name = array_shift($words);
-        $formattedWords = implode(',', array_map([$writer, 'formatWord'], $words));
+        parent::macroInput($node, $writer);
+        $node->tokenizer->reset();
+        return $this->_macroInput($node, $writer);
+    }
 
-        $ctrlExpr = ($name[0] === '$' ? 'is_object(%0.word) ? %0.word : ' : '')
-            . 'end($this->global->formsStack)[%0.word]';
+    /**
+     * Common handle for {input} and <input n:name>
+     *
+     * @param MacroNode $node
+     * @param PhpWriter $writer
+     * @param array $attrs
+     * @return string
+     * @throws CompileException
+     */
+    public function _macroInput(MacroNode $node, PhpWriter $writer, array $attrs = NULL)
+    {
+        $words = $node->tokenizer->fetchWords();
+        $name = array_shift($words);
+
         return $writer->write(
             $this->ln($node)
             . 'echo '
             . $this->renderingDispatcher
-            . "->renderControl(\$this->global->formsStack, $ctrlExpr, %node.array, [$formattedWords])",
-            $name
+            . '->renderControl($this->global->formsStack, ')
+        . $this->writeControlReturningExpression($writer, $name)
+        . $writer->write(', ')
+        . $this->writeAttrsFromMacroOrTag($writer, $attrs)
+        . $writer->write(
+            ", %0.var)"
+            . ($attrs === NULL ? '' : '->attributes()'),
+            count($words) ? $words[0] : NULL
         );
     }
 
@@ -313,9 +345,10 @@ class FormMacros extends NFormMacros
         //all other nodes MUST have rendered end tag
         $node->empty = $tagName === 'input';
 
+        // clear attributes that were overriden in HTML tag
+        $attrs = array_fill_keys(array_keys($node->htmlNode->attrs), NULL);
+
         if ($tagName === 'form') {
-            // clear attributes that were overriden in HTML tag
-            $attrs = array_fill_keys(array_keys($node->htmlNode->attrs), NULL);
             return $this->_macroFormBegin($node, $writer, $attrs);
         } else {
             throw new NotImplementedException;
@@ -395,4 +428,25 @@ class FormMacros extends NFormMacros
     {
         return "/* line $node->startLine */\n";
     }
+
+    private function writeAttrsFromMacroOrTag(PhpWriter $writer, array $attrs = NULL)
+    {
+        return $writer->write($attrs === NULL ? '%node.array' : '%0.var', $attrs);
+    }
+
+    /**
+     * @param PhpWriter $writer
+     * @param $name
+     * @return string
+     */
+    protected function writeControlReturningExpression(PhpWriter $writer, $name)
+    {
+        return $writer->write(
+            ($name[0] === '$'
+                ? 'is_object(%0.word) ? %0.word : '
+                : '')
+            . 'end($this->global->formsStack)[%0.word]',
+            $name);
+    }
+
 }

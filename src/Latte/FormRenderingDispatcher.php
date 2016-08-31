@@ -53,15 +53,15 @@ class FormRenderingDispatcher
         }
     }
 
-    public function renderLabel(array $formsStack, IControl $control, array $attrs, array $parts)
+    public function renderLabel(array $formsStack, IControl $control, array $attrs, $part = NULL)
     {
         $renderer = reset($formsStack)->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            return $renderer->renderLabel($control, $attrs, $parts ? $parts[0] : NULL);
+            return $renderer->renderLabel($control, $attrs, $part);
         } else {
-            if ($parts && method_exists($control, 'getLabelPart')) {
-                return $control->getLabelPart($parts[0]);
-            } elseif (!$parts && method_exists($control, 'getLabel')) {
+            if ($part !== NULL && method_exists($control, 'getLabelPart')) {
+                return $control->getLabelPart($part);
+            } elseif ($part === NULL && method_exists($control, 'getLabel')) {
                 return $control->getLabel();
             } else {
                 throw new InvalidStateException('No getLabel[Part] method available to render ' . get_class($control));
@@ -69,15 +69,15 @@ class FormRenderingDispatcher
         }
     }
 
-    public function renderControl(array $formsStack, IControl $control, array $attrs, array $parts)
+    public function renderControl(array $formsStack, IControl $control, array $attrs, $part = NULL)
     {
         $renderer = reset($formsStack)->getRenderer();
         if ($renderer instanceof IExtendedFormRenderer) {
-            return $renderer->renderControl($control, $attrs, $parts ? $parts[0] : NULL);
+            return $renderer->renderControl($control, $attrs, $part);
         } else {
-            if ($parts && method_exists($control, 'getControlPart')) {
-                return $control->getControlPart($parts[0]);
-            } elseif (!$parts && method_exists($control, 'getControl')) {
+            if ($part !== NULL && method_exists($control, 'getControlPart')) {
+                return $control->getControlPart($part);
+            } elseif ($part === NULL && method_exists($control, 'getControl')) {
                 return $control->getControl();
             } else {
                 throw new InvalidStateException('No getControl[Part] method available to render '
