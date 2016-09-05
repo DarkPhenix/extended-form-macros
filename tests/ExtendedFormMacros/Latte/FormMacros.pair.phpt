@@ -1,5 +1,6 @@
 <?php
 
+use Instante\ExtendedFormMacros\PairAttributes;
 use InstanteTests\ExtendedFormMacros\Latte\MacroTester;
 use Nette\Forms\Controls\TextInput;
 
@@ -13,5 +14,8 @@ $tester->getForm()->addText('foo', 'Foo field');
 $tester->getMockRenderer()->shouldReceive('renderBegin');
 $tester->getMockRenderer()->shouldReceive('renderEnd');
 
-$tester->getMockRenderer()->shouldReceive('renderPair')->with(Mockery::type(TextInput::class))->once();
+$tester->getMockRenderer()->shouldReceive('renderPair')->with(
+    Mockery::type(TextInput::class),
+    Mockery::type(PairAttributes::class)
+)->once();
 $tester->render();

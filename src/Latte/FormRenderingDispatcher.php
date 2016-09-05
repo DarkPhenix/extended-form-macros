@@ -3,6 +3,7 @@
 namespace Instante\ExtendedFormMacros\Latte;
 
 use Instante\ExtendedFormMacros\IExtendedFormRenderer;
+use Instante\ExtendedFormMacros\PairAttributes;
 use Latte\RuntimeException;
 use Nette\Bridges\FormsLatte\Runtime;
 use Nette\Forms\Container;
@@ -13,10 +14,10 @@ use Nette\InvalidStateException;
 
 class FormRenderingDispatcher
 {
-    public function renderPair(array $formsStack, IControl $control)
+    public function renderPair(array $formsStack, IControl $control, array $attrs)
     {
         $this->assertInForm($formsStack, 'pair');
-        return $this->getExtendedRenderer($formsStack, 'pair')->renderPair($control);
+        return $this->getExtendedRenderer($formsStack, 'pair')->renderPair($control, PairAttributes::fetch($attrs));
     }
 
     public function renderGroup(array $formsStack, ControlGroup $group)

@@ -13,9 +13,10 @@ interface IExtendedFormRenderer extends IFormRenderer
 {
     /**
      * @param IControl $control
+     * @param PairAttributes $attrs
      * @return Html
      */
-    public function renderPair(IControl $control);
+    public function renderPair(IControl $control, PairAttributes $attrs);
 
     /**
      * @param ControlGroup $group

@@ -82,8 +82,7 @@ class FormMacros extends NFormMacros
             . $this->renderingDispatcher
             . '->renderPair($this->global->formsStack, ')
         . $this->renderFormComponent($node, $writer)
-        . $writer->write(')');
-
+        . $writer->write(', %node.array)');
     }
 
     /**
