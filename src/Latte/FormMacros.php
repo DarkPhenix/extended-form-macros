@@ -76,12 +76,14 @@ class FormMacros extends NFormMacros
      */
     public function macroPair(MacroNode $node, PhpWriter $writer)
     {
-        return sprintf(
+        return $writer->write(
             $this->ln($node)
             . 'echo '
             . $this->renderingDispatcher
-            . '->renderPair($this->global->formsStack, %s)',
-            $this->renderFormComponent($node, $writer));
+            . '->renderPair($this->global->formsStack, ')
+        . $this->renderFormComponent($node, $writer)
+        . $writer->write(')');
+
     }
 
     /**
@@ -107,12 +109,13 @@ class FormMacros extends NFormMacros
     public function macroContainer(MacroNode $node, PhpWriter $writer)
     {
         // writer intentionally not used - already processed by renderFormComponent
-        return sprintf(
+        return $writer->write(
             $this->ln($node)
             . 'echo '
             . $this->renderingDispatcher
-            . '->renderContainer($this->global->formsStack, %s)',
-            $this->renderFormComponent($node, $writer));
+            . '->renderContainer($this->global->formsStack, ')
+        . $this->renderFormComponent($node, $writer)
+        . $writer->write(')');
     }
 
     /**
