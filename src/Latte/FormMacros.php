@@ -383,18 +383,6 @@ class FormMacros extends NFormMacros
             }
             $node->innerContent = '<?php echo $_input->getHtml() ?>';
         }
-        // ancestor's macroNameEnd code
-        //elseif ($tagName === 'label') {
-        //    if ($node->htmlNode->empty) {
-        //        $node->innerContent = "<?php echo \$_input->getLabelPart()->getHtml() ? >";
-        //    }
-        //} elseif ($tagName === 'button') {
-        //    if ($node->htmlNode->empty) {
-        //        $node->innerContent = '<?php echo htmlspecialchars($_input->caption) ? >';
-        //    }
-        //} else { // select, textarea
-        //    $node->innerContent = '<?php echo $_input->getControl()->getHtml() ? >';
-        //}
     }
 
     /**

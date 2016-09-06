@@ -12,6 +12,9 @@ use Nette\Forms\Form;
 use Nette\Forms\IControl;
 use Nette\InvalidStateException;
 
+/**
+ * Bridge between extended form macros and IFormRenderer implementation created to simplify latte generated code.
+ */
 class FormRenderingDispatcher
 {
     public function renderPair(array $formsStack, IControl $control, array $attrs)
