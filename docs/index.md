@@ -43,19 +43,16 @@ Beginning of the form
 Errors
 
 > Renders only errors that have no associated form element.
-
 ```smarty
 {form.errors} or {$form->getRenderer()->renderGlobalErrors()}
 ```
 
 > Renders all form errors, including errors from controls.
-
 ```smarty
 {form.errors all} or {$form->getRenderer()->renderGlobalErrors(FALSE)}
 ```
 
 > Renders control's errors.
-
 ```smarty
 {input.errors control-name} or {input.errors $control} or {$form->getRenderer()->renderControlErrors($control)}
 ```
@@ -63,7 +60,6 @@ Errors
 Body
 
 > Renders all controls and groups that are not rendered yet.
-
 ```smarty
 {form.body} or {$form->getRenderer()->renderBody()} 
 ```
@@ -71,7 +67,6 @@ Body
 End
 
 > Renders all hidden inputs and a closing tag of the form.
-
 ```smarty
 {/form} or {$form->getRenderer()->renderEnd()}
 ```
@@ -79,7 +74,6 @@ End
 Container
 
 > Renders all inputs in a container that are not rendered yet.
-
 ```smarty
 {container container-name} or {$form->getRenderer()->renderContainer($form['container-name'])}
 ```
@@ -87,7 +81,6 @@ Container
 Group
 
 > Renders fieldset, legend and all controls in a group that are not rendered yet.
-
 ```smarty
 {group "Group name"} or {$form->getRenderer()->renderGroup($form->getGroup('Group name'))}
 ```
@@ -97,7 +90,6 @@ Group
 Control-label pair
 
 > Renders the control alongside with its label, errors and optional description.
-
 ```smarty
 {pair control-name} or {$form->getRenderer()->renderPair($form['control-name'])} 
 ```
