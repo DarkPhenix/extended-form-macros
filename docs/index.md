@@ -96,7 +96,7 @@ Control-label pair
 
 > Pair rendering supports smart passing of attributes to label and control element.
 ```smarty
-{pair control-name class=>'pairClass', label-class='labelClass', input-class='inputClass'} 
+{pair control-name class=>'pairClass', label-class=>'labelClass', input-class=>'inputClass'} 
 ```
 Outputs something like (depends on IExtendedFormRenderer implementation):
 ```html
