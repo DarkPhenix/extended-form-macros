@@ -257,9 +257,9 @@ class FormMacros extends NFormMacros
         . $writer->write(', ')
         . $this->writeAttrsFromMacroOrTag($writer, $attrs)
         . $writer->write(
-            ', %0.var); echo $_input'
+            ', %0.raw); echo $_input'
             . ($attrs === NULL ? '' : '->attributes()'),
-            count($words) ? $words[0] : NULL
+            count($words) ? $writer->formatWord($words[0]) : 'NULL'
         );
     }
 
