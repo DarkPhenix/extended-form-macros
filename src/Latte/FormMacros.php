@@ -62,9 +62,9 @@ class FormMacros extends NFormMacros
         $me->addMacro('form', [$me, 'macroForm'], [$me, 'macroFormEnd']);
         $me->addMacro('form.errors', [$me, 'macroFormErrors']);
         $me->addMacro('form.body', [$me, 'macroFormBody']);
-        $me->addMacro('label', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
-        $me->addMacro('input', [$me, 'macroInput']);
-        $me->addMacro('input.errors', [$me, 'macroInputErrors']);
+        $me->addMacro('elabel', [$me, 'macroLabel'], [$me, 'macroLabelEnd'], NULL, self::AUTO_EMPTY);
+        $me->addMacro('einput', [$me, 'macroInput']);
+        $me->addMacro('einput.errors', [$me, 'macroInputErrors']);
         $me->addMacro('name', [$me, 'macroName'], [$me, 'macroNameEnd'], [$me, 'macroNameAttr']);
         return $me;
     }
